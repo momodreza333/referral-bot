@@ -1,2 +1,40 @@
-python-telegram-bot
-Flask
+git clone https://github.com/svtcore/telegram-referral-bot.git
+cd telegram-referral-bot
+pip install -r requirements.txt
+cp .env.example .env
+BOT_NAME=my_new_coin_bot
+COUNT=5
+REFER_ID=111222333
+CHANNEL_NAME=my_new_coin_channel
+DELAY_MIN=10
+DELAY_MAX=15
+MY_ACCOUNT_1:11223344:d54d1702ad0f8326224b817c796763c9
+MY_ACCOUNT_2:55667788:a91c3401be1f9437335c928de905874f
+MY_ACCOUNT_1:11223344:d54d1702ad0f8326224b817c796763c9
+MY_ACCOUNT_2:55667788:a91c3401be1f9437335c928de905874f
+python bot.py --auth -t accounts.txt
+AQEAbCdEfG...
+AQEAxYzWvU...
+# No proxy – leave the file empty, or omit --proxies flag
+
+# Anonymous proxy
+192.168.1.1:8080
+
+# Authenticated proxy
+192.168.1.1:8080:login:password
+python bot.py --auth -t accounts.txt
+# Standard run
+python bot.py --run -t accounts.txt
+
+# With string sessions
+python bot.py --run -t accounts.txt --strings
+
+# With proxies
+python bot.py --run -t accounts.txt -p proxies.txt
+
+# With channel join (requires CHANNEL_NAME set in .env)
+python bot.py --run -t accounts.txt --channel
+
+# All options combined
+python bot.py --run -t accounts.txt -p proxies.txt --channel
+python bot.py --interactive
