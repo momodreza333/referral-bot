@@ -1,40 +1,77 @@
-git clone https://github.com/svtcore/telegram-referral-bot.git
-cd telegram-referral-bot
-pip install -r requirements.txt
-cp .env.example .env
-BOT_NAME=my_new_coin_bot
-COUNT=5
-REFER_ID=111222333
-CHANNEL_NAME=my_new_coin_channel
-DELAY_MIN=10
-DELAY_MAX=15
-MY_ACCOUNT_1:11223344:d54d1702ad0f8326224b817c796763c9
-MY_ACCOUNT_2:55667788:a91c3401be1f9437335c928de905874f
-MY_ACCOUNT_1:11223344:d54d1702ad0f8326224b817c796763c9
-MY_ACCOUNT_2:55667788:a91c3401be1f9437335c928de905874f
-python bot.py --auth -t accounts.txt
-AQEAbCdEfG...
-AQEAxYzWvU...
-# No proxy – leave the file empty, or omit --proxies flag
+# ref_bot_final.py
+from pyrogram import Client, filters
+import requests
+import random
+import string
+import asyncio
 
-# Anonymous proxy
-192.168.1.1:8080
+# تنظیمات ربات (توکن و آیدی شما)
+BOT_TOKEN = "8994003827:AAFcd7nezgloTu4tb8tOsd9VLE2E9RzFu7E"  # توکن ربات شما
+YOUR_USER_ID = 555555555  # آیدی عددی خود را اینجا بگذارید (از @userinfobot بگیرید)
+CHANNEL_ID = -1001234567890  # آیدی کانال/گروه (اختیاری، اگر نمی‌خواهید ارسال شود، این خط را حذف کنید)
 
-# Authenticated proxy
-192.168.1.1:8080:login:password
-python bot.py --auth -t accounts.txt
-# Standard run
-python bot.py --run -t accounts.txt
+app = Client("ref_bot_final", bot_token=BOT_TOKEN)
 
-# With string sessions
-python bot.py --run -t accounts.txt --strings
+# تابع تولید رفرال فیک
+def generate_fake_ref(length=10):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-# With proxies
-python bot.py --run -t accounts.txt -p proxies.txt
+# دستور /start
+@app.on_message(filters.command("start") & filters.private)
+async def start(client, message):
+    await message.reply_text(
+        "🔥 **ربات رفرال فیک مینی‌آپ**\n\n"
+        "لینک مینی‌آپ را با دستور زیر ارسال کنید:\n"
+        "`/ref <لینک_مینی_آپ> <تعداد_رفرال>`\n\n"
+        "مثال:\n"
+        "`/ref https://t.me/miniapp?start=ref123 100`\n\n"
+        "⚠️ **بدون نیاز به شماره تلفن یا ورود به تلگرام.**"
+    )
 
-# With channel join (requires CHANNEL_NAME set in .env)
-python bot.py --run -t accounts.txt --channel
+# دستور /ref برای تولید رفرال
+@app.on_message(filters.command("ref") & filters.private)
+async def generate_ref(client, message):
+    try:
+        args = message.text.split()
+        if len(args) < 3:
+            await message.reply_text("❌ **فرمت اشتباه!**\n\nاز این فرمت استفاده کنید:\n`/ref <لینک_مینی_آپ> <تعداد_رفرال>`")
+            return
 
-# All options combined
-python bot.py --run -t accounts.txt -p proxies.txt --channel
-python bot.py --interactive
+        miniapp_link = args[1]
+        ref_count = int(args[2])
+
+        if ref_count > 1000:
+            await message.reply_text("⚠️ حداکثر تعداد رفرال: 1000")
+            return
+
+        await message.reply_text(f"⏳ در حال تولید **{ref_count}** رفرال فیک برای لینک:\n`{miniapp_link}`")
+
+        # تولید رفرال‌های فیک و باز کردن لینک
+        for i in range(ref_count):
+            fake_ref = generate_fake_ref()
+            full_link = f"{miniapp_link}&ref={fake_ref}" if "?" in miniapp_link else f"{miniapp_link}?ref={fake_ref}"
+
+            # ارسال رفرال به کانال/گروه (اختیاری)
+            if 'CHANNEL_ID' in globals() and i % 10 == 0:
+                try:
+                    await client.send_message(CHANNEL_ID, f"🔗 رفرال جدید: {full_link}")
+                except:
+                    pass
+
+            # باز کردن لینک بدون نیاز به مرورگر
+            try:
+                requests.get(full_link, timeout=5)
+            except:
+                pass
+
+            if (i + 1) % 50 == 0:
+                await message.reply_text(f"✅ **{i + 1}** رفرال تولید شد...")
+
+        await message.reply_text(f"✅ **تکمیل شد!**\n\n**{ref_count}** رفرال فیک برای لینک زیر تولید شد:\n`{miniapp_link}`")
+
+    except Exception as e:
+        await message.reply_text(f"❌ خطا: {str(e)}")
+
+# اجرای ربات
+print("🤖 ربات در حال اجرا...")
+app.run()
